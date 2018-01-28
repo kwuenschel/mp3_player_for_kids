@@ -1,5 +1,6 @@
 import ujson
 
+
 class RfidCards:
     
     def __init__(self):

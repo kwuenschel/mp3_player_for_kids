@@ -27,7 +27,7 @@ def handle_request(reader, writer):
         folder = parameters.get("folder", 1)
         mp3.play_folder(int(folder))
     elif path.startswith("/play"):
-        track = parameters.get("track",1)
+        track = parameters.get("track", 1)
         mp3.play_track(int(track))
     elif path.startswith("/next"):
         mp3.next()

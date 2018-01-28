@@ -7,6 +7,7 @@ import uasyncio as asyncio
 
 DEBUG = False
 
+
 def _debug(*args):
     if DEBUG:
         print(*args)
@@ -18,16 +19,16 @@ class ReaderPlayer:
          The User sets the state by placing rfid cards on the reader. Is a card on the reader, the 
          player is playing the corresponding mp3. Is the card removed, the player will pause.
     """
-    #STOPPED = 0   #no need yet
-    PLAYING = 1 #tag placed on reader
-    PAUSED = 2  #no tag on reader
-    LED_PIN = 15 #D8
-    BUTTON_PIN = 12 #D6
+    #STOPPED = 0  #no need yet
+    PLAYING = 1  # tag placed on reader
+    PAUSED = 2  # no tag on reader
+    LED_PIN = 15  # D8
+    BUTTON_PIN = 12  # D6
     SPECIAL_CARDS = {
         'end_program': '0x65c08cb9',
         #'next_song': '0xc0125e7a',
-        'next_unassigned_folder': '0x1206be59', #preview the next folder that is not yet assigned to a card, to 'program' the next tag
-        }
+        'next_unassigned_folder': '0x1206be59',
+    }
     
     def __init__(self):
         self.led = machine.Pin(self.LED_PIN, machine.Pin.OUT)
@@ -113,7 +114,7 @@ class ReaderPlayer:
                         _debug("same folder", folder_id)
                         #user put same card back
                         self.resume()
-                    else: #new card
+                    else:  # new card
                         self.play_folder(folder_id)
                         _debug("new card", folder_id)
 
