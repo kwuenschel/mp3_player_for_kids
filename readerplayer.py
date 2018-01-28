@@ -13,6 +13,10 @@ def _debug(*args):
         print(*args)
 
 
+def raw_uid_to_string(raw_uid):
+    return "0x%02x%02x%02x%02x" % (raw_uid[0], raw_uid[1], raw_uid[2], raw_uid[3])
+
+
 class ReaderPlayer:
     """ Has state (paused, playing, stopped).
          Keeps the state of reader and player in sync without much feebback from the player.
@@ -40,7 +44,8 @@ class ReaderPlayer:
         self.rdr = mfrc522.MFRC522(0, 2, 4, 5, 14)
         self.rfid_cards = rfidcards.RfidCards()
 
-    def song_just_finished(self):
+    @property
+    def has_song_just_finished(self):
         """ Is true, if a song just finished playing
              The mp3-player returns a specific code, after ending a song.
         """
@@ -49,10 +54,8 @@ class ReaderPlayer:
         # uart_return_code == b'~\xff\x06=\x00\x00\x12\xfe\xac\xef~\xff\x06=\x00\x00\x12\xfe\xac\xef'
         return uart_return_code and b'\x06=' in uart_return_code 
 
-    def _uid(self, raw_uid):
-        return "0x%02x%02x%02x%02x" % (raw_uid[0], raw_uid[1], raw_uid[2], raw_uid[3])
-        
-    def get_card_id(self):
+    @property
+    def card_id(self):
         """ Return the UID (Unique Identification Number) assigned to the current card
         """
         (stat, tag_type) = self.rdr.request(self.rdr.REQIDL)
@@ -61,31 +64,24 @@ class ReaderPlayer:
             (stat, raw_uid) = self.rdr.anticoll()
             _debug('anticoll_2', stat)
             if stat == self.rdr.OK:
-                return self._uid(raw_uid)
+                return raw_uid_to_string(raw_uid)
+
         return None    
-    
-    def card_still_there(self):
+
+    @property
+    def is_card_still_there(self):
         # still current card? this is veryfast compared to rdr.request()
         stat, raw_uid = self.rdr.anticoll()
         _debug('card still there', stat)
         return stat == self.rdr.OK
 
-    def do(self):
-        """ called regularly from the main loop
-        """
-        try:
-            self._do()
-        except KeyboardInterrupt:
-            # thrown from time to time from the reader...  no idea why.
-            return
-        
     async def run(self):
         while True:
             if self.status == self.PLAYING:
-                if self.song_just_finished():
+                if self.has_song_just_finished:
                     _debug("next")
                     mp3.next()
-                if not self.card_still_there():
+                if not self.is_card_still_there:
                     self.pause()
                     #sometimes pause gets ignored by the player, so lets pause again, can't harm.
                     yield from asyncio.sleep_ms(100)
@@ -100,7 +96,7 @@ class ReaderPlayer:
             elif self.status == self.PAUSED:
                 #resume folder or play new one
                 #also check special cards
-                uid = self.get_card_id()
+                uid = self.card_id
                 _debug("uid", uid)
                 if uid == self.SPECIAL_CARDS["end_program"]:
                     mp3.stop()
