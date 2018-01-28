@@ -1,3 +1,4 @@
+import micropython
 import mp3
 import readerplayer
 import uasyncio as asyncio
@@ -15,4 +16,5 @@ def main():
 
 
 if __name__ == '__main__':
+    micropython.kbd_intr(-1)
     main()
